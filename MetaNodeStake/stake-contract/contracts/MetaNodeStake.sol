@@ -41,72 +41,66 @@ contract MetaNodeStake is
     4. User's `finishedMetaNode` gets updated.
     */
     struct Pool {
-        // Address of staking token
-        // 质押代币的地址
+        // 质押池对应的代币地址，ETH池用address()，ERC20池用对应token的地址
         address stTokenAddress;
-        // Weight of pool
-        // 不同资金池所占的权重
+        // 该池的权重，决定奖励分配比例，权重越高，分到的MetaNode奖励越多。
         uint256 poolWeight;
-        // Last block number that MetaNodes distribution occurs for pool
+        // 该池上次发放奖励的区块号。每次有用户操作（存入/取出/claim）时，都会更新这个值。
+        // 用于计算从上次到当前区块之间累计的奖励，防止重复发放。
         uint256 lastRewardBlock;
-        // Accumulated MetaNodes per staking token of pool
-        // 质押 1个ETH经过1个区块高度，能拿到 n 个MetaNode
+        // 累计每单位质押代币获得的MetaNode奖励。每次奖励结算时更新，用户领取奖励时用这个值计算。
         uint256 accMetaNodePerST;
-        // Staking token amount
-        // 质押的代币数量
+        // 当前池中总质押代币的数量。
         uint256 stTokenAmount;
-        // Min staking amount
-        // 最小质押数量
+        // 最小质押金额，防止恶意刷小额。
         uint256 minDepositAmount;
-        // Withdraw locked blocks
-        // Unstake locked blocks 解质押锁定的区块高度
+        // 解质押锁定起，用户发起解质押后需等待多少区块才能提现。
         uint256 unstakeLockedBlocks;
     }
 
     struct UnstakeRequest {
-        // Request withdraw amount
-        uint256 amount; // 用户取消质押的代币数量，要取出多少个 token
-        // The blocks when the request withdraw amount can be released
-        uint256 unlockBlocks; // 解质押的区块高度
+        // 用户发起解质押的数量
+        uint256 amount; 
+        // 该请求可提现的区块号（当前区块 + 锁定期）
+        uint256 unlockBlocks; 
     }
 
     struct User {
-        // 记录用户相对每个资金池 的质押记录
-        // Staking token amount that user provided
-        // 用户在当前资金池，质押的代币数量
+        // 用户在某池的质押总量。
         uint256 stAmount;
-        // Finished distributed MetaNodes to user 最终 MetaNode 得到的数量
-        // 用户在当前资金池，已经领取的 MetaNode 数量
+        // 用户已领取的MetaNode奖励基准线。防止重复领取。
         uint256 finishedMetaNode;
-        // Pending to claim MetaNodes 当前可取数量
-        // 用户在当前资金池，当前可领取的 MetaNode 数量
+        // 用户当前可领取但未领取的MetaNode奖励。
         uint256 pendingMetaNode;
-        // Withdraw request list
-        // 用户在当前资金池，取消质押的记录
+        // 用户所有解质押请求列表。
         UnstakeRequest[] requests;
     }
 
     // ************************************** STATE VARIABLES **************************************
-    // First block that MetaNodeStake will start from
-    uint256 public startBlock; // 质押开始区块高度
-    // First block that MetaNodeStake will end from
-    uint256 public endBlock; // 质押结束区块高度
-    // MetaNode token reward per block
-    uint256 public MetaNodePerBlock; // 每个区块高度，MetaNode 的奖励数量
+    // 质押活动开始区块号。
+    uint256 public startBlock; 
+    // 质押活动结束区块号。
+    uint256 public endBlock;
+    // 每个区块发放的MetaNode 奖励总量
+    uint256 public MetaNodePerBlock;
 
-    // Pause the withdraw function
-    bool public withdrawPaused; // 是否暂停提现
-    // Pause the claim function
-    bool public claimPaused; // 是否暂停领取
+    // 是否暂停提现
+    bool public withdrawPaused;
+    // 是否暂停领取奖励
+    bool public claimPaused;
 
-    // MetaNode token
-    IERC20 public MetaNode; // MetaNode 代币地址
+    // MetaNode 奖励代币地址
+    IERC20 public MetaNode;
 
     // Total pool weight / Sum of all pool weights
-    uint256 public totalPoolWeight; // 所有资金池的权重总和
-    Pool[] public pool; // 资金池列表
+    // 所有池权重总和，用于奖励分配。
+    uint256 public totalPoolWeight;
+    
+    // 所有质押池列表。
+    Pool[] public pool;
 
     // pool id => user address => user info
+    // 用户在每个池的质押和奖励信息。
     mapping(uint256 => mapping(address => User)) public user; // 资金池 id => 用户地址 => 用户信息
 
     // ************************************** EVENT **************************************
@@ -192,6 +186,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 合约初始化，设置奖励币，活动区块，每区块奖励等
      * @notice Set MetaNode token address. Set basic info when deploying.
      */
     function initialize(
@@ -318,6 +313,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 管理员添加新池，设置池参数
      * @notice Add a new staking to pool. Can only be called by admin
      * DO NOT add the same staking token more than once. MetaNode rewards will be messed up if you do
      */
@@ -376,6 +372,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 管理员更新池参数
      * @notice Update the given pool's info (minDepositAmount and unstakeLockedBlocks). Can only be called by admin.
      */
     function updatePool(
@@ -390,6 +387,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 管理员调整池权重。
      * @notice Update the given pool's weight. Can only be called by admin.
      */
     function setPoolWeight(
@@ -522,6 +520,7 @@ contract MetaNodeStake is
     // ************************************** PUBLIC FUNCTION **************************************
 
     /**
+     * 更新池奖励状态，计算区块奖励，更新lastRewardBlock 和 accMetaNodePerST。
      * @notice Update reward variables of the given pool to be up-to-date.
      */
     function updatePool(uint256 _pid) public checkPid(_pid) {
@@ -573,6 +572,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 用户存入ETH质押。
      * @notice Deposit staking ETH for MetaNode rewards
      */
     function depositETH() public payable whenNotPaused {
@@ -622,6 +622,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 用户发起解质押，写入UnstakeRequest。
      * @notice Unstake staking tokens
      *
      * @param _pid       Id of the pool to be withdrawn from
@@ -665,6 +666,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 用户提现已解锁的质押。
      * @notice Withdraw the unlock unstake amount
      *
      * @param _pid       Id of the pool to be withdrawn from
@@ -708,6 +710,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 用户领取MetaNode奖励。
      * @notice Claim MetaNode tokens reward
      *
      * @param _pid       Id of the pool to be claimed from
@@ -740,6 +743,7 @@ contract MetaNodeStake is
     // ************************************** INTERNAL FUNCTION **************************************
 
     /**
+     * 用户存入ERC20质押。
      * @notice Deposit staking token for MetaNode rewards
      *
      * @param _pid       Id of the pool to be deposited to
