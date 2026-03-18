@@ -5,9 +5,12 @@ describe("stake test", async function () {
     let admin, user1, user2, user3
     let erc20Contract, stakeProxyContract
 
+    // 每块奖励的MetaNode数量
     const metaNodePerBlock = 100n
+    // 质押活动持续的区块数
     const blockHight = 10000
     // const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545/")
+    // ethers.provider Hardhat自动提供的本地链provider，可获取区块号、余额、手动出块等。
     const provider = ethers.provider
     // 解除质押的锁定区块数
     const unstakeLockedBlocks = 10
@@ -15,10 +18,15 @@ describe("stake test", async function () {
 
     it("deploy", async function () {
         // 部署 ERC20 合约
+        // ethers.getSigners() 获取本地测试链的账户(钱包)，用于模拟不同用户操作
         [a0, admin, user1, user2, user3] = await ethers.getSigners()
+        // ethers.getContractFactory() 获取合约工厂对象，用于部署合约
         const erc20 = await ethers.getContractFactory("MetaNodeToken")
+        // contractFactory.deploy() 部署合约到链上，返回合约实例。
+        // contract.connect(账户) 用指定账户操作合约（模拟不同用户）
         erc20Contract = await erc20.connect(admin).deploy()
         await erc20Contract.waitForDeployment()
+        // contract.getAddress() 获取部署后合约地址
         const erc20ddress = await erc20Contract.getAddress()
         console.log("erc20ddress::", erc20ddress)
         expect(erc20ddress).to.length.gt(0)
@@ -118,6 +126,7 @@ describe("stake test", async function () {
 
     it("deposit", async () => {
         // user1 deposit 10ETH, user2 deposit 20ETH
+        // ethers.parseEther("1") 把字符串ETH 金额转为wei（最小单位）
         await stakeProxyContract.connect(user1).depositETH({ value: ethers.parseEther("10") })
         await stakeProxyContract.connect(user2).depositETH({ value: ethers.parseEther("20") })
 

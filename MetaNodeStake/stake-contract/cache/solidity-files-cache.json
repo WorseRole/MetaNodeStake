@@ -581,8 +581,8 @@
       ]
     },
     "/Users/showmac/Desktop/personal/liyanyan/MetaNodeStake/MetaNodeStake/stake-contract/contracts/MetaNodeStake.sol": {
-      "lastModificationDate": 1773658760276,
-      "contentHash": "7b6ad97b1bfa718908245f4bb0fec17b",
+      "lastModificationDate": 1773744107671,
+      "contentHash": "e99f4d9835561b4d22b040db5ea48c74",
       "sourceName": "contracts/MetaNodeStake.sol",
       "solcConfig": {
         "version": "0.8.22",
