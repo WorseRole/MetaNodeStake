@@ -200,5 +200,14 @@ describe("stake test", async function () {
         expect(user2BalanceAfter - user2BalanceBefore).to.lt(BigInt(2E18)).gt(BigInt(1.9E18))
         expect(user3BalanceAfter - user3BalanceBefore).to.eq(BigInt(10E18))
     })
+
+    // 1. 异常分支测试
+
+    // - 质押金额小于最小值应revert
+    it("stakeAmountMin", async() => {
+        await expect(stakeProxyContract.connect(user1).depositETH({ value: ethers.parseEther("0.0001") }))
+        .to.be.revertedWith("Stake amount is below minimum")
+    })
+
 })
 
