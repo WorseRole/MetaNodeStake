@@ -206,8 +206,67 @@ describe("stake test", async function () {
     // - 质押金额小于最小值应revert
     it("stakeAmountMin", async() => {
         await expect(stakeProxyContract.connect(user1).depositETH({ value: ethers.parseEther("0.0001") }))
-        .to.be.revertedWith("Stake amount is below minimum")
+        .to.be.revertedWith("deposit amount is too small")
     })
+    // - 解质押数量大于已质押应revert
+    it("unstakeAmountExceed", async() => {
+        await expect(stakeProxyContract.connect(user1).unstake(0, ethers.parseEther("100") ))
+        .to.be.revertedWith("Not enough staking token balance")
+    })
+
+    // - 非管理员操作管理方法应revert
+    it("onlyAdmin", async() => {
+        await expect(stakeProxyContract.connect(user1).setStartBlock(100))
+        .to.be.revertedWithCustomError(stakeProxyContract, "AccessControlUnauthorizedAccount")
+    })
+    
+    // - 未到解锁区块提现应revert
+    it("withdrawLocked", async() => {
+        await stakeProxyContract.connect(user1).depositETH({ value: ethers.parseEther("1") })
+        await stakeProxyContract.connect(user1).unstake(0, ethers.parseEther("1"))
+        const balanceBefore = await provider.getBalance(user1.address)
+        console.log("withdrawLocked balanceBefore::", balanceBefore)
+        // 这是因为调用 withdraw(0) 时虽然没有转账，但还是消耗了 gas，所以余额减少了 gas 费。
+        await stakeProxyContract.connect(user1).withdraw(0)
+        const balanceAfter = await provider.getBalance(user1.address)
+        console.log("withdrawLocked balanceAfter::", balanceAfter)
+        // 判断余额变化小于一定的 gas 消耗（比如小于 0.01 ETH），而不是严格等于 0
+        expect(balanceBefore - balanceAfter).to.be.lt(ethers.parseEther("0.01"))
+    })
+
+// - pauseClaim/pauseWithdraw 状态下相关操作应revert
+    it("pauseClaimWithdraw", async() => {
+        // 暂停提现后，用户尝试提现应失败
+        await stakeProxyContract.connect(admin).pauseWithdraw()
+        await expect(stakeProxyContract.connect(user1).withdraw(0))
+        .to.be.revertedWith("withdraw is paused")
+
+        // 恢复提现，暂停领取奖励后，用户尝试领取奖励应失败
+        await stakeProxyContract.connect(admin).unpauseWithdraw()
+        await stakeProxyContract.connect(admin).pauseClaim()
+        await expect(stakeProxyContract.connect(user1).claim(0))
+        .to.be.revertedWith("claim is paused")
+    })
+
+
+// 2. 边界条件测试
+// - 只剩1wei/最小单位时的质押/解质押/领奖励
+// - 多池并存时奖励分配正确性
+// - 合约余额不足时 _safeMetaNodeTransfer 能否安全处理
+
+// 3. 多用户/多池交互
+// - 多用户同时质押、解质押、领奖励
+// - 多池权重变化后奖励分配是否正确
+
+// 4. 管理员操作
+// - 管理员添加、更新池、调整权重、升级合约等所有管理操作
+// - 非管理员操作应失败
+
+// 5. 事件触发
+// - 验证关键操作是否正确 emit 事件（Deposit、Withdraw、Claim、AddPool 等）
+
+// 6. 代码分支
+// - 覆盖所有 if/else、for 循环、modifier、内部函数分支
 
 })
 

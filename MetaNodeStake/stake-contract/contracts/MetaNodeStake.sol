@@ -228,6 +228,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 打开提现暂停状态，用户可以正常提现。
      * @notice Pause withdraw. Can only be called by admin.
      */
     function pauseWithdraw() public onlyRole(ADMIN_ROLE) {
@@ -239,6 +240,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 关闭提现暂停状态，恢复用户的提现功能。
      * @notice Unpause withdraw. Can only be called by admin.
      */
     function unpauseWithdraw() public onlyRole(ADMIN_ROLE) {
@@ -250,6 +252,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 打开领取奖励暂停状态，用户无法领取奖励。
      * @notice Pause claim. Can only be called by admin.
      */
     function pauseClaim() public onlyRole(ADMIN_ROLE) {
@@ -261,6 +264,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 关闭领取奖励暂停状态，恢复用户的领取奖励功能。
      * @notice Unpause claim. Can only be called by admin.
      */
     function unpauseClaim() public onlyRole(ADMIN_ROLE) {
@@ -272,6 +276,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 设置质押开始区块
      * @notice Update staking start block. Can only be called by admin.
      */
     function setStartBlock(uint256 _startBlock) public onlyRole(ADMIN_ROLE) {
@@ -286,6 +291,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 设置质押结束区块
      * @notice Update staking end block. Can only be called by admin.
      */
     function setEndBlock(uint256 _endBlock) public onlyRole(ADMIN_ROLE) {
@@ -300,6 +306,7 @@ contract MetaNodeStake is
     }
 
     /**
+     * 设置每区块奖励的MetaNode数量
      * @notice Update the MetaNode reward amount per block. Can only be called by admin.
      */
     function setMetaNodePerBlock(
@@ -410,6 +417,7 @@ contract MetaNodeStake is
     // ************************************** QUERY FUNCTION **************************************
 
     /**
+     * 获取池的数量/总数
      * @notice Get the length/amount of pool
      */
     function poolLength() external view returns (uint256) {
