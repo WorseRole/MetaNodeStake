@@ -139,9 +139,9 @@ describe("stake test", async function () {
         const user1Stake = await stakeProxyContract.stakingBalance(0, user1.address)
         const user2Stake = await stakeProxyContract.stakingBalance(0, user2.address)
         const user3Stake = await stakeProxyContract.stakingBalance(1, user3.address)
-        expect(user1Stake).to.eq(BigInt(10E18))
-        expect(user2Stake).to.eq(BigInt(20E18))
-        expect(user3Stake).to.eq(BigInt(200E18))
+        expect(user1Stake).to.eq(ethers.parseEther("10"))
+        expect(user2Stake).to.eq(ethers.parseEther("20"))
+        expect(user3Stake).to.eq(ethers.parseEther("200"))
     })
 
     it("unstake", async () => {
@@ -251,6 +251,24 @@ describe("stake test", async function () {
 
 // 2. 边界条件测试
 // - 只剩1wei/最小单位时的质押/解质押/领奖励
+    it("boundaryAmount", async() => {
+        
+        // user1 解质押最小单位的ETH
+        await stakeProxyContract.connect(user1).unstake(0, 1n)
+        let user1Stake = await stakeProxyContract.stakingBalance(0, user1.address)
+        console.log("user1Stake::", user1Stake)
+
+        // user3 质押最小单位的ERC20
+        await erc20Contract.connect(admin).transfer(user3.address, 1n)
+        const proxyAddress = await stakeProxyContract.getAddress()
+        await erc20Contract.connect(user3).approve(proxyAddress, 1n)
+        await stakeProxyContract.connect(user3).deposit(1, 1n)
+        let user3Stake = await stakeProxyContract.stakingBalance(1, user3.address)
+        expect(user3Stake).to.eq(1n)
+
+
+        // user3
+    })
 // - 多池并存时奖励分配正确性
 // - 合约余额不足时 _safeMetaNodeTransfer 能否安全处理
 
