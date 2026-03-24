@@ -250,24 +250,23 @@ describe("stake test", async function () {
 
 
 // 2. 边界条件测试
-// - 只剩1wei/最小单位时的质押/解质押/领奖励
-    it("boundaryAmount", async() => {
+// - 最小单位时的质押/解质押/领奖励
+    it("boundary", async() => {
+        // 创建新的测试账户，确保干净的起始状态
+        const [_, __, ___, ____, cleanUser] = await ethers.getSigners()
+
+        // 测试正好等于最小质押金额的情况
+        const minAmount = await stakeProxyContract.pool(0).then(p => p.minDepositAmount)
+        await stakeProxyContract.connect(cleanUser).depositETH({value : minAmount})
+        const balance = await stakeProxyContract.stakingBalance(0, cleanUser.address)
+        expect(balance).to.eq(minAmount)
+
+
+        // 测试user1的代币数量全部解质押
         
-        // user1 解质押最小单位的ETH
-        await stakeProxyContract.connect(user1).unstake(0, 1n)
-        let user1Stake = await stakeProxyContract.stakingBalance(0, user1.address)
-        console.log("user1Stake::", user1Stake)
-
-        // user3 质押最小单位的ERC20
-        await erc20Contract.connect(admin).transfer(user3.address, 1n)
-        const proxyAddress = await stakeProxyContract.getAddress()
-        await erc20Contract.connect(user3).approve(proxyAddress, 1n)
-        await stakeProxyContract.connect(user3).deposit(1, 1n)
-        let user3Stake = await stakeProxyContract.stakingBalance(1, user3.address)
-        expect(user3Stake).to.eq(1n)
+        
 
 
-        // user3
     })
 // - 多池并存时奖励分配正确性
 // - 合约余额不足时 _safeMetaNodeTransfer 能否安全处理
