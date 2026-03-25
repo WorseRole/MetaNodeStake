@@ -263,7 +263,30 @@ describe("stake test", async function () {
 
 
         // 测试user1的代币数量全部解质押
+        const user1Stake = await stakeProxyContract.stakingBalance(0, user1.address)
+        await stakeProxyContract.connect(user1).unstake(0, user1Stake)
+        const balanceAfter = await stakeProxyContract.stakingBalance(0, user1.address)
+        expect(balanceAfter).to.eq(0)
         
+        // 测试user3的代币数量全部解质押
+        const user3Stake = await stakeProxyContract.stakingBalance(1, user3.address)
+        await stakeProxyContract.connect(user3).unstake(1, user3Stake)
+        const balanceAfter3 = await stakeProxyContract.stakingBalance(1, user3.address)
+        expect(balanceAfter3).to.eq(0)
+
+        // 测试领奖励时奖励数量正好等于0的情况
+        // 先确保user2没有未领取的奖励
+        await stakeProxyContract.connect(admin).unpauseClaim()
+        await stakeProxyContract.connect(user2).claim(0)
+        const rewardBefore = await stakeProxyContract.pendingMetaNode(0, user2.address)
+        console.log("rewardBefore::", rewardBefore)
+        expect(rewardBefore).to.eq(0)
+
+        // 测试领奖励时奖励数量正好等于最小单位的情况
+        // 先让user2产生一些奖励
+        await provider.send("evm_mine", [])
+
+
         
 
 
