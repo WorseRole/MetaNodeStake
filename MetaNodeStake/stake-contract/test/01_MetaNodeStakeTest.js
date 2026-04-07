@@ -284,10 +284,27 @@ describe("stake test", async function () {
 
         // 测试领奖励时奖励数量正好等于最小单位的情况
         // 先让user2产生一些奖励
+        // provider.send("evm_mine", []) 手动出块，触发奖励计算 在Hardhat本地链里手动出一个块。因为奖励是按区块累积的，不出新块通畅就不会新增奖励。
         await provider.send("evm_mine", [])
+        // 调用合约制度方法，查询user2在池子 0 里 “当前待领取” 的MetaNode 奖励数量，这个值一般是还没claim 的奖励数量。
+        const pendingMetaNode = await stakeProxyContract.pendingMetaNode(0, user2.address)
+        console.log("pendingMetaNode::", pendingMetaNode)
+        // 断言待领取奖励数量大于0，确保测试条件满足
+        expect(pendingMetaNode).to.gt(0)
 
+        // user2 领取奖励
+        const user2BalanceBefore = await erc20Contract.balanceOf(user2.address)
+        console.log("user2BalanceBefore::", user2BalanceBefore)
+        await stakeProxyContract.connect(user2).claim(0)
+        const rewardAfter = await stakeProxyContract.pendingMetaNode(0, user2.address)
+        const user2Balance = await erc20Contract.balanceOf(user2.address)
+        console.log("user2Balance::", user2Balance)
+        console.log("rewardAfter::", rewardAfter)
+        // 断言领取后待领取奖励数量为0，确保奖励正确发放
+        expect(rewardAfter).to.eq(0)
 
-        
+        // 断言领取后用户余额增加了奖励数量，确保奖励正确发放
+        expect(user2Balance - user2BalanceBefore).to.eq(pendingMetaNode)
 
 
     })
