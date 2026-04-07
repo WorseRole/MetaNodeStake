@@ -292,19 +292,26 @@ describe("stake test", async function () {
         // 断言待领取奖励数量大于0，确保测试条件满足
         expect(pendingMetaNode).to.gt(0)
 
-        // user2 领取奖励
-        const user2BalanceBefore = await erc20Contract.balanceOf(user2.address)
-        console.log("user2BalanceBefore::", user2BalanceBefore)
-        await stakeProxyContract.connect(user2).claim(0)
-        const rewardAfter = await stakeProxyContract.pendingMetaNode(0, user2.address)
-        const user2Balance = await erc20Contract.balanceOf(user2.address)
-        console.log("user2Balance::", user2Balance)
-        console.log("rewardAfter::", rewardAfter)
-        // 断言领取后待领取奖励数量为0，确保奖励正确发放
-        expect(rewardAfter).to.eq(0)
 
-        // 断言领取后用户余额增加了奖励数量，确保奖励正确发放
-        expect(user2Balance - user2BalanceBefore).to.eq(pendingMetaNode)
+        console.log("user2 领取奖励")
+        // user2 领取奖励
+        const pendingBefore = await stakeProxyContract.pendingMetaNode(0, user2.address)
+        console.log("user2 领取奖励 pendingBefore::", pendingBefore)
+        const balanceBefore = await erc20Contract.balanceOf(user2.address)
+        console.log("user2 领取奖励 balanceBefore::", balanceBefore)
+        const tx = await stakeProxyContract.connect(user2).claim(0)
+        console.log("user2 领取奖励 claim tx hash::", tx.hash)
+        await tx.wait()
+        const balanceAfterUser2 = await erc20Contract.balanceOf(user2.address)
+        console.log("user2 领取奖励 balanceAfterUser2::", balanceAfterUser2)
+        const claimed = balanceAfterUser2 - balanceBefore
+        console.log("user2 领取奖励 claimed::", claimed)
+        const pendingAfter = await stakeProxyContract.pendingMetaNode(0, user2.address)
+        console.log("user2 领取奖励 pendingAfter::", pendingAfter)
+        // 领取后应清零（或非常接近 0，取决于你的实现）
+        expect(pendingAfter).to.eq(0)
+        // 至少领取到了 claim 前看到的待领取（如果 claim 过程中又累积，claimed 可能更大）
+        expect(claimed).to.gte(pendingBefore)
 
 
     })
