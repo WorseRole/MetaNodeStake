@@ -56,3 +56,22 @@ npx hardhat run scripts/MetaNodeStake.js --network sepolia
 ```zsh
 npx hardhat run scripts/addPool.js --network sepolia
 ```
+
+## 最后得到的覆盖率 
+
+npx hardhat coverage
+
+----------------------------|----------|----------|----------|----------|----------------|
+File                        |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
+----------------------------|----------|----------|----------|----------|----------------|
+ contracts/                 |      100 |    81.72 |    97.83 |      100 |                |
+  MetaNode.sol              |      100 |      100 |      100 |      100 |                |
+  MetaNodeStake.sol         |      100 |    81.72 |    96.88 |      100 |                |
+  TestERC20.sol             |      100 |      100 |      100 |      100 |                |
+  TestEthReceiver.sol       |      100 |      100 |      100 |      100 |                |
+  TestEthReceiverFalse.sol  |      100 |      100 |      100 |      100 |                |
+  TestEthReceiverRevert.sol |      100 |      100 |      100 |      100 |                |
+----------------------------|----------|----------|----------|----------|----------------|
+All files                   |      100 |    81.72 |    97.83 |      100 |                |
+----------------------------|----------|----------|----------|----------|----------------|
+
